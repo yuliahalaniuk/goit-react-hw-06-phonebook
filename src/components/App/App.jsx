@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { nanoid } from 'nanoid';
 import css from './App.module.css';
 
@@ -6,52 +6,27 @@ import ContactForm from '../ContactForm/ContactForm';
 import ContactList from '../ContactList/ContactList';
 import Filter from '../Filter/Filter';
 
-const LS_CONTACTS = 'contacts_list';
-
-const INITIAL_CONTACTS = [
-  { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-  { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-  { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-  { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-];
+import { useSelector, useDispatch } from 'react-redux';
+import { addContact } from '../../redux/contactsSlice';
 
 const App = () => {
-  const [filter, setFilter] = useState('');
-  const [contacts, setContacts] = useState(() => {
-    const savedContacts = localStorage.getItem(LS_CONTACTS);
+  const filterText = useSelector(state => state.contacts.filter);
+  const contacts = useSelector(state => state.contacts.contacts);
 
-    return savedContacts ? JSON.parse(savedContacts) : INITIAL_CONTACTS;
-  });
+  const dispatch = useDispatch();
 
   const addNewContact = ({ name, number }) => {
     contacts.find(contact => contact.name === name)
       ? alert(`${name} is already in your contacts.`)
-      : setContacts(prevState => [
-          ...prevState,
-          { name, number, id: nanoid() },
-        ]);
-  };
-
-  const handleDelete = deleteID => {
-    setContacts(prevState =>
-      prevState.filter(contact => contact.id !== deleteID)
-    );
-  };
-
-  const handleFilterChange = e => {
-    setFilter(e.currentTarget.value);
+      : dispatch(addContact({ name, number, id: nanoid() }));
   };
 
   const getVisibleContacts = () => {
-    const normalizedFilter = filter.toLowerCase();
+    const normalizedFilter = filterText.toLowerCase();
     return contacts.filter(contact =>
       contact.name.toLowerCase().includes(normalizedFilter)
     );
   };
-
-  useEffect(() => {
-    localStorage.setItem(LS_CONTACTS, JSON.stringify(contacts));
-  }, [contacts]);
 
   return (
     <div className={css.container}>
@@ -61,11 +36,8 @@ const App = () => {
 
         <h2 className={css.contactListTitle}>Contacts</h2>
 
-        <Filter filter={filter} handleFilterChange={handleFilterChange} />
-        <ContactList
-          contactList={getVisibleContacts()}
-          handleDelete={handleDelete}
-        />
+        <Filter />
+        <ContactList contactList={getVisibleContacts()} />
       </div>
     </div>
   );
